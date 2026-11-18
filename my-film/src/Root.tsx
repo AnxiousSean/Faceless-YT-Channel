@@ -5,11 +5,13 @@ import {CastTest} from './films/CastTest';
 import {CHANNEL_LOOK, STYLES} from './styles/looks';
 import {CLASSIC} from './components/look';
 import {ThreeChairs, THREE_CHAIRS_FRAMES} from './films/ThreeChairs';
+import {WatchedPart1, WATCHED_PART1_FRAMES} from './films/watched/Watched';
 
 // "Test" and "CastTest" render in the channel style (Horror Ink). Test-<style> compositions are alternates.
 export const RemotionRoot: React.FC = () => (
   <>
     <Composition id="ThreeChairs" component={ThreeChairs} durationInFrames={THREE_CHAIRS_FRAMES} fps={30} width={1920} height={1080} />
+    <Composition id="WatchedPart1" component={WatchedPart1} durationInFrames={WATCHED_PART1_FRAMES} fps={30} width={1920} height={1080} />
     <Composition id="Test" component={() => <StyledTestFilm look={CHANNEL_LOOK} />} durationInFrames={300} fps={30} width={1920} height={1080} />
     <Composition id="CastTest" component={() => <CastTest look={CHANNEL_LOOK} />} durationInFrames={150} fps={30} width={1920} height={1080} />
     {[CLASSIC, ...STYLES].map((look) => (

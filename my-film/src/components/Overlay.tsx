@@ -88,3 +88,35 @@ export const HitFX: React.FC<{frame: number; at: number; cx: number; cy: number}
     </AbsoluteFill>
   );
 };
+
+// Story HUD clock / night counter (top left). Pops when `changedAt` passes.
+export const HudClock: React.FC<{label: string; frame: number; changedAt: number}> = ({label, frame, changedAt}) => {
+  const {fps} = useVideoConfig();
+  const L = useLook();
+  const s = frame < changedAt ? 1 : 0.85 + 0.15 * spring({frame: frame - changedAt, fps, config: {damping: 7, stiffness: 260}});
+  return (
+    <div style={{position: 'absolute', left: 70, top: BAR_H + 28, fontFamily: FONT, fontWeight: 700, fontSize: 34, color: L.text,
+      padding: '4px 16px', border: `2.5px solid ${L.outline}`, borderRadius: 12, background: L.hudBg,
+      transform: `scale(${s})`, transformOrigin: 'left center', letterSpacing: 2}}>
+      {label}
+    </div>
+  );
+};
+
+// Key-moment pop-up card (text message, app alert, call). Pops in, holds, fades.
+export const Notify: React.FC<{frame: number; at: number; until: number; x: number; y: number; title: string; body?: string; accent?: boolean; icon?: string; w?: number}> =
+  ({frame, at, until, x, y, title, body, accent = false, icon = '●', w = 520}) => {
+  const {fps} = useVideoConfig();
+  const L = useLook();
+  if (frame < at || frame > until) return null;
+  const s = spring({frame: frame - at, fps, config: {damping: 8, stiffness: 240}});
+  const op = interpolate(frame, [until - 10, until], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  return (
+    <div style={{position: 'absolute', left: x, top: y, width: w, transform: `scale(${s})`, transformOrigin: 'top left', opacity: op,
+      background: '#14161ef2', border: `2.5px solid ${accent ? L.accent : L.outline}`, borderRadius: 18, padding: '16px 22px',
+      boxShadow: accent ? `0 0 30px ${L.accent}66` : '0 8px 30px #000a', fontFamily: FONT, color: L.text}}>
+      <div style={{fontWeight: 700, fontSize: 30, color: accent ? L.accent : L.text}}>{icon} {title}</div>
+      {body && <div style={{fontSize: 34, marginTop: 6}}>{body}</div>}
+    </div>
+  );
+};

@@ -3,7 +3,7 @@ import {useLook} from './look';
 
 // The Shadow: Pip's body, pure black, taller, glowing accent outline, two slit eyes.
 // grow: 1 = normal (1.15x Pip). Bigger when Pip is weaker. rise: 0..1 emerging from floor.
-export const ShadowSelf: React.FC<{x: number; y: number; frame: number; grow: number; rise: number; glow?: number; lean?: number}> = ({x, y, frame, grow, rise, glow = 1, lean = 0}) => {
+export const ShadowSelf: React.FC<{x: number; y: number; frame: number; grow: number; rise: number; glow?: number; lean?: number; kind?: 'pip' | 'bram' | 'lune'}> = ({x, y, frame, grow, rise, glow = 1, lean = 0, kind = 'pip'}) => {
   const L = useLook();
   const sway = Math.sin(frame * 0.05) * 4;
   const handL: [number, number] = [-62, -36 + sway];
@@ -14,7 +14,9 @@ export const ShadowSelf: React.FC<{x: number; y: number; frame: number; grow: nu
       <path d="M -18 -40 Q -24 -18 -26 0" strokeWidth={limb} fill="none" />
       <path d="M 18 -40 Q 24 -18 26 0" strokeWidth={limb} fill="none" />
       <ellipse cx={0} cy={-90} rx={47 + extra} ry={58 + extra} strokeWidth={0} />
-      <circle cx={0} cy={-205} r={78 + extra} strokeWidth={0} />
+      {kind === 'bram' ? <rect x={-84 - extra} y={-280 - extra} width={168 + 2 * extra} height={146 + 2 * extra} rx={32 + extra} strokeWidth={0} />
+        : <circle cx={0} cy={-205} r={(kind === 'lune' ? 68 : 78) + extra} strokeWidth={0} />}
+      {kind === 'lune' && <path d="M 0 -270 Q 4 -296 16 -306" strokeWidth={limb * 0.7} fill="none" />}
       <path d={arm(-1, handL)} strokeWidth={limb} fill="none" />
       <path d={arm(1, handR)} strokeWidth={limb} fill="none" />
     </g>

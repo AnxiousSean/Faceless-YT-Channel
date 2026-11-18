@@ -19,6 +19,9 @@ export type PipPose = {
   handL?: [number, number];
   handR?: [number, number];
   headband?: number;    // 0..1 pop-in of the Day-2 item
+  bowtie?: number;      // 0..1 pop-in of the bow tie item
+  walk?: number;        // walk-cycle phase (radians); legs swing when walkAmt > 0
+  walkAmt?: number;     // 0..1 stride size
 };
 
 const HEAD_Y = -205;
@@ -34,6 +37,26 @@ const brow = (side: number, angle: number, dy: number) => {
   const a = (angle * Math.PI) / 180;
   const cx = side * 28, cy = HEAD_Y - 30 + dy, h = 16;
   return `M ${cx - side * h * Math.cos(a)} ${cy + h * Math.sin(a)} L ${cx + side * h * Math.cos(a)} ${cy - h * Math.sin(a)}`;
+};
+
+// Noodle leg with an optional walk cycle (foot swings forward/back and lifts).
+export const leg = (side: number, phase: number, amt: number, top = -40, len = 0) => {
+  const sw = Math.sin(phase + (side > 0 ? Math.PI : 0));
+  const lift = Math.max(0, Math.cos(phase + (side > 0 ? Math.PI : 0)));
+  const fx = side * 28 + sw * 26 * amt, fy = len - lift * 16 * amt;
+  return `M ${side * 18} ${top} Q ${side * 26 + sw * 10 * amt} ${(top + fy) / 2} ${fx} ${fy}`;
+};
+
+export const BowTie: React.FC<{y: number; s: number; frame: number; w?: number}> = ({y, s, frame, w = 1}) => {
+  const L = useLook();
+  const flap = Math.sin(frame * 0.2) * 2;
+  return (
+    <g transform={`translate(0 ${y}) scale(${s * w} ${s})`}>
+      <path d={`M -6 0 L -44 ${-22 - flap} L -44 ${22 + flap} Z`} fill={L.item} stroke={L.pipStroke} strokeWidth={5} strokeLinejoin="round" />
+      <path d={`M 6 0 L 44 ${-22 + flap} L 44 ${22 - flap} Z`} fill={L.item} stroke={L.pipStroke} strokeWidth={5} strokeLinejoin="round" />
+      <rect x={-12} y={-12} width={24} height={24} rx={6} fill={L.itemDark} stroke={L.pipStroke} strokeWidth={5} />
+    </g>
+  );
 };
 
 export const Barbell: React.FC<{y: number; frame: number}> = ({y, frame}) => {
@@ -55,7 +78,7 @@ export const Barbell: React.FC<{y: number; frame: number}> = ({y, frame}) => {
 
 export const Pip: React.FC<PipPose> = (p) => {
   const L = useLook();
-  const {x, y, frame, scale = 1, squash = 0, browL = 0, browR = 0, browY = 0, mouth = 0, mouthOpen = 0, blink = 0, look = 0, barY = null, headband = 0} = p;
+  const {x, y, frame, scale = 1, squash = 0, browL = 0, browR = 0, browY = 0, mouth = 0, mouthOpen = 0, blink = 0, look = 0, barY = null, headband = 0, bowtie = 0, walk = 0, walkAmt = 0} = p;
   const handL: [number, number] = barY !== null ? [-66, barY] : p.handL ?? [-58, -40];
   const handR: [number, number] = barY !== null ? [66, barY] : p.handR ?? [58, -40];
   const sx = scale * (1 + squash);
@@ -77,8 +100,8 @@ export const Pip: React.FC<PipPose> = (p) => {
         <defs>
           <clipPath id={clipId}><circle cx={0} cy={HEAD_Y} r={HEAD_R} /></clipPath>
         </defs>
-        {limb('M -18 -40 Q -26 -18 -28 0', L.pipDark)}
-        {limb('M 18 -40 Q 26 -18 28 0', L.pip)}
+        {limb(leg(-1, walk, walkAmt), L.pipDark)}
+        {limb(leg(1, walk, walkAmt), L.pip)}
         {/* body + head (no neck) */}
         {inked && <ellipse cx={0} cy={-90} rx={47} ry={58} fill={L.pip} {...bodyStroke} />}
         <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill={L.pip} {...bodyStroke} />
@@ -92,6 +115,8 @@ export const Pip: React.FC<PipPose> = (p) => {
             <rect x={-90} y={HEAD_Y - 62} width={180} height={20} fill={L.item} clipPath={`url(#${clipId})`} />
           </g>
         )}
+        {/* item: bow tie at the head/body join */}
+        {bowtie > 0 && <BowTie y={HEAD_Y + HEAD_R - 2} s={bowtie} frame={frame} />}
         {/* face */}
         <ellipse cx={-26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill={L.face} />
         <ellipse cx={26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill={L.face} />

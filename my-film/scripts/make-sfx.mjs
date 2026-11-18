@@ -119,4 +119,73 @@ for (let v = 0; v < 3; v++) { const d = new Float32Array(N(0.07)); const lp = on
   for (let i = 0; i < d.length; i++) { b = (b + noise() * 0.02) * 0.998; d[i] = lp(b); }
   write('room', fadeEdges(d, 300), 0.5); }
 
+
+// ===== Added for "Three Chairs" (appended so the earlier sounds stay identical) =====
+
+// --- Knock (three knuckle thuds on a wooden door)
+{ const d = new Float32Array(N(0.75)); const lp = onePole(700);
+  [0, 0.2, 0.4].forEach((st, k) => { const s0 = N(st); let ph = 0;
+    for (let i = 0; i < N(0.15); i++) { const t = i / SR; ph += TAU * (150 - 40 * t / 0.15) / SR;
+      d[s0 + i] += (1 - k * 0.12) * (Math.sin(ph) * Math.exp(-t / 0.035) + 0.5 * noise() * Math.exp(-t / 0.004)); } });
+  for (let i = 0; i < d.length; i++) d[i] = lp(d[i]);
+  write('knock', fadeEdges(d), 0.9); }
+
+// --- Pen scribble (scratchy band-passed noise in strokes)
+{ const d = new Float32Array(N(1.1)); const flt = svf();
+  for (let i = 0; i < d.length; i++) { const t = i / SR;
+    const stroke = Math.max(0, Math.sin(TAU * 4.3 * t)) ** 0.6 * (0.6 + 0.4 * Math.sin(TAU * 11 * t));
+    d[i] = flt(noise(), 3200 + 900 * Math.sin(TAU * 7 * t), 0.4).band * stroke; }
+  write('scribble', fadeEdges(d, 20), 0.5); }
+
+// --- Paper slide (soft swish of paper on a surface)
+{ const d = new Float32Array(N(0.4)); const flt = svf();
+  for (let i = 0; i < d.length; i++) { const u = i / d.length;
+    d[i] = flt(noise(), 1800 + 2400 * u, 0.6).band * Math.sin(Math.PI * u) ** 1.5; }
+  write('paper', fadeEdges(d), 0.6); }
+
+// --- Clink (ceramic bowl set down)
+{ const d = new Float32Array(N(0.6));
+  [[2100, 0.12, 1], [3350, 0.08, 0.6], [5200, 0.05, 0.3], [180, 0.04, 0.8]].forEach(([f, dec, a]) => {
+    for (let i = 0; i < d.length; i++) { const t = i / SR; d[i] += a * Math.sin(TAU * f * t) * Math.exp(-t / dec); } });
+  for (let i = 0; i < N(0.005); i++) d[i] += noise() * 0.4;
+  write('clink', fadeEdges(d, 1), 0.55); }
+
+// --- Door (latch click, then a heavy wooden thud as it shuts)
+{ const d = new Float32Array(N(0.8)); const lp = onePole(400);
+  for (let i = 0; i < N(0.03); i++) { const t = i / SR; d[i] += 0.5 * noise() * Math.exp(-t / 0.002) + 0.4 * Math.sin(TAU * 1900 * t) * Math.exp(-t / 0.006); }
+  const s0 = N(0.12); let ph = 0;
+  for (let i = 0; s0 + i < d.length; i++) { const t = i / SR; ph += TAU * (70 + 60 * Math.exp(-t / 0.03)) / SR;
+    d[s0 + i] += Math.sin(ph) * Math.exp(-t / 0.12) + lp(noise()) * 2 * Math.exp(-t / 0.04); }
+  write('door', fadeEdges(d), 0.85); }
+
+// --- Footstep (soft padded tap)
+{ const d = new Float32Array(N(0.12)); const lp = onePole(500); let ph = 0;
+  for (let i = 0; i < d.length; i++) { const t = i / SR; ph += TAU * (110 - 300 * t) / SR;
+    d[i] = Math.sin(ph) * Math.exp(-t / 0.02) + lp(noise()) * 1.5 * Math.exp(-t / 0.015); }
+  write('step', fadeEdges(d, 1), 0.5); }
+
+// --- Steam / soup pour (gentle filtered hiss swelling and fading)
+{ const d = new Float32Array(N(1.4)); const flt = svf();
+  for (let i = 0; i < d.length; i++) { const u = i / d.length; const t = i / SR;
+    d[i] = flt(noise(), 900 + 300 * Math.sin(TAU * 3 * t), 0.7).band * Math.sin(Math.PI * u) * (0.7 + 0.3 * Math.sin(TAU * 9 * t)); }
+  write('pour', fadeEdges(d, 20), 0.5); }
+
+// --- "Hope" theme: a short music-box melody composed here, note by note (C major, 72 bpm)
+{ const beat = 60 / 72 / 2; // eighth notes
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  // [midi note, start in eighths, length in eighths]
+  const mel = [[72,0,2],[76,2,2],[79,4,3],[77,7,1],[76,8,2],[74,10,2],[72,12,4],
+               [69,16,2],[72,18,2],[76,20,3],[74,23,1],[72,24,2],[71,26,2],[72,28,6]];
+  const bass = [[48,0,8],[55,4,4],[53,8,8],[57,16,8],[53,20,4],[55,24,4],[48,28,6]];
+  const total = 34 * beat + 2.5; const d = new Float32Array(N(total));
+  const pluck = (m, st, len, amp, bright) => { const f = hz(m); const s0 = N(st * beat);
+    for (let i = 0; s0 + i < d.length && i < N(len * beat + 1.8); i++) { const t = i / SR;
+      const env = Math.min(t / 0.004, 1) * Math.exp(-t / (0.5 + len * 0.08));
+      d[s0 + i] += amp * env * (Math.sin(TAU * f * t) + bright * Math.sin(TAU * 2 * f * t) * Math.exp(-t / 0.15) + 0.2 * bright * Math.sin(TAU * 3.01 * f * t) * Math.exp(-t / 0.08)); } };
+  mel.forEach(([m, st, len]) => pluck(m, st, len, 0.5, 0.5));
+  bass.forEach(([m, st, len]) => pluck(m, st, len, 0.35, 0.15));
+  // a little room: two quiet echoes
+  for (let i = d.length - 1; i >= N(0.18); i--) d[i] += 0.22 * d[i - N(0.18)];
+  write('hope', fadeEdges(d, 200), 0.6); }
+
 console.log('done.');

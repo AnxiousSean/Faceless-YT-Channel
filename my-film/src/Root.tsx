@@ -13,6 +13,7 @@ export const RemotionRoot: React.FC = () => (
   <>
     <Composition id="ThreeChairs" component={ThreeChairs} durationInFrames={THREE_CHAIRS_FRAMES} fps={30} width={1920} height={1080} />
     <Still id="WatchedThumbnail" component={WatchedThumbnail} width={1920} height={1080} />
+    <Still id="WatchedThumbnail37" component={() => <WatchedThumbnail variant="count" />} width={1920} height={1080} />
     <Composition id="Watched" component={Watched} durationInFrames={WATCHED_FRAMES} fps={30} width={1920} height={1080} />
     <Composition id="Test" component={() => <StyledTestFilm look={CHANNEL_LOOK} />} durationInFrames={300} fps={30} width={1920} height={1080} />
     <Composition id="CastTest" component={() => <CastTest look={CHANNEL_LOOK} />} durationInFrames={150} fps={30} width={1920} height={1080} />

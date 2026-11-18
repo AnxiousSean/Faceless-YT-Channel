@@ -9,7 +9,7 @@ import {AP, Apartment, F, SIT_Y, theoPose} from './kit';
 
 // YouTube thumbnail for WATCHED (render as a still at 1280x720).
 const PUSH = {s: 2.15, ox: 930, oy: 560};
-export const WatchedThumbnail: React.FC = () => {
+export const WatchedThumbnail: React.FC<{variant?: 'who' | 'count'}> = ({variant = 'who'}) => {
   const L = CHANNEL_LOOK;
   const menace = (glowOnly: boolean) => (
     <g opacity={glowOnly ? 0.85 : 1}>
@@ -31,10 +31,18 @@ export const WatchedThumbnail: React.FC = () => {
           </svg>
         </AbsoluteFill>
         {/* text */}
-        <div style={{position: 'absolute', right: 60, top: 70, textAlign: 'right', fontFamily: FONT, fontWeight: 700, fontSize: 150, lineHeight: 0.95,
-          color: '#FFFFFF', WebkitTextStroke: '10px #000', paintOrder: 'stroke fill', textShadow: '0 8px 24px #000'}}>
-          WHO'S<br /><span style={{color: L.accent, textShadow: `0 0 40px ${L.accent}aa, 0 8px 24px #000`}}>WATCHING?</span>
-        </div>
+        {variant === 'who' ? (
+          <div style={{position: 'absolute', right: 60, top: 70, textAlign: 'right', fontFamily: FONT, fontWeight: 700, fontSize: 150, lineHeight: 0.95,
+            color: '#FFFFFF', WebkitTextStroke: '10px #000', paintOrder: 'stroke fill', textShadow: '0 8px 24px #000'}}>
+            WHO'S<br /><span style={{color: L.accent, textShadow: `0 0 40px ${L.accent}aa, 0 8px 24px #000`}}>WATCHING?</span>
+          </div>
+        ) : (
+          <div style={{position: 'absolute', right: 60, top: 40, textAlign: 'right', fontFamily: FONT, fontWeight: 700, lineHeight: 0.9,
+            color: '#FFFFFF', WebkitTextStroke: '10px #000', paintOrder: 'stroke fill', textShadow: '0 8px 24px #000'}}>
+            <div style={{fontSize: 260, color: L.accent, textShadow: `0 0 50px ${L.accent}aa, 0 8px 24px #000`}}>37</div>
+            <div style={{fontSize: 118}}>RECORDINGS</div>
+          </div>
+        )}
         {/* little REC badge */}
         <div style={{position: 'absolute', left: 60, top: 60, fontFamily: FONT, fontWeight: 700, fontSize: 64, color: '#fff', WebkitTextStroke: '6px #000', paintOrder: 'stroke fill',
           display: 'flex', alignItems: 'center', gap: 16}}>

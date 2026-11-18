@@ -1,35 +1,42 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, spring, useVideoConfig} from 'remotion';
-import {BAR_H, FONT, VIOLET} from './theme';
+import {BAR_H, FONT} from './theme';
+import {useLook} from './look';
 
 const fade = (f: number, from: number, to: number, len = 10) =>
   interpolate(f, [from, from + len, to - len, to], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
 
 // Narrator: small, white, top centre, max 8 words, fades in/out.
 export const Narrator: React.FC<{text: string; frame: number; from: number; to: number}> = ({text, frame, from, to}) => {
+  const L = useLook();
   if (text.trim().split(/\s+/).length > 8) throw new Error(`Narrator line over 8 words: "${text}"`);
   return (
-    <div style={{position: 'absolute', top: BAR_H + 34, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 40, color: 'white', opacity: fade(frame, from, to)}}>
+    <div style={{position: 'absolute', top: BAR_H + 34, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 40 * L.textScale, color: L.text, textShadow: L.textShadow, opacity: fade(frame, from, to)}}>
       {text}
     </div>
   );
 };
 
 // Shadow line: accent colour, beside the shadow.
-export const ShadowLine: React.FC<{text: string; frame: number; from: number; to: number; x: number; y: number}> = ({text, frame, from, to, x, y}) => (
-  <div style={{position: 'absolute', left: x, top: y, fontFamily: FONT, fontWeight: 700, fontSize: 46, color: VIOLET,
-    textShadow: `0 0 18px ${VIOLET}aa`, opacity: fade(frame, from, to), transform: `translateY(${interpolate(frame, [from, from + 12], [10, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}px)`}}>
+export const ShadowLine: React.FC<{text: string; frame: number; from: number; to: number; x: number; y: number}> = ({text, frame, from, to, x, y}) => {
+  const L = useLook();
+  return (
+  <div style={{position: 'absolute', left: Math.min(x, 1880 - text.length * 46 * L.textScale * 0.48), top: y - (L.textScale - 1) * 60, whiteSpace: 'nowrap',
+    fontFamily: FONT, fontWeight: 700, fontSize: 46 * L.textScale, color: L.accent,
+    textShadow: `0 0 18px ${L.accent}aa, 0 0 4px #000, 2px 2px 0 #000`, opacity: fade(frame, from, to), transform: `translateY(${interpolate(frame, [from, from + 12], [10, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}px)`}}>
     {text}
   </div>
-);
+  );
+};
 
 // DAY counter top-left, pops when it changes.
 export const DayCounter: React.FC<{day: number; frame: number; changedAt: number}> = ({day, frame, changedAt}) => {
   const {fps} = useVideoConfig();
+  const L = useLook();
   const s = spring({frame: frame - changedAt, fps, config: {damping: 8, stiffness: 220}});
   return (
-    <div style={{position: 'absolute', left: 70, top: BAR_H + 28, fontFamily: FONT, fontWeight: 700, fontSize: 34, color: 'white',
-      padding: '4px 16px', border: '2.5px solid #8A8F9C', borderRadius: 12, background: '#0C0E16cc',
+    <div style={{position: 'absolute', left: 70, top: BAR_H + 28, fontFamily: FONT, fontWeight: 700, fontSize: 34 * L.textScale, color: L.text, textShadow: L.textShadow,
+      padding: '4px 16px', border: `${Math.max(2.5, L.outlineW)}px solid ${L.outlineW > 0 ? L.outline : '#ffffff66'}`, borderRadius: 12, background: L.hudBg,
       transform: `scale(${s})`, transformOrigin: 'left center', letterSpacing: 2}}>
       DAY {day}
     </div>
@@ -37,15 +44,18 @@ export const DayCounter: React.FC<{day: number; frame: number; changedAt: number
 };
 
 // Rep count pop: overshoot, settle, float up and fade.
-export const RepPop: React.FC<{text: string; frame: number; at: number; x: number; y: number; size?: number; color?: string}> = ({text, frame, at, x, y, size = 80, color = '#FFD45A'}) => {
+export const RepPop: React.FC<{text: string; frame: number; at: number; x: number; y: number; size?: number}> = ({text, frame, at, x, y, size = 80}) => {
   const {fps} = useVideoConfig();
+  const L = useLook();
+  const color = L.repColor;
+  size = size * (1 + (L.textScale - 1) * 0.5);
   if (frame < at) return null;
   const s = spring({frame: frame - at, fps, config: {damping: 7, stiffness: 260}});
   const op = interpolate(frame - at, [18, 30], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const rise = interpolate(frame - at, [0, 30], [0, -40]);
   return (
     <div style={{position: 'absolute', left: x, top: y + rise, transform: `translate(-50%,-50%) scale(${s}) rotate(-6deg)`, fontFamily: FONT, fontWeight: 700,
-      fontSize: size, color, opacity: op, WebkitTextStroke: '3px #000', textShadow: `0 0 24px ${color}88`, whiteSpace: 'nowrap'}}>
+      fontSize: size, color, opacity: op, WebkitTextStroke: `3px ${L.repStroke}`, textShadow: `0 0 24px ${color}88`, whiteSpace: 'nowrap'}}>
       {text}
     </div>
   );

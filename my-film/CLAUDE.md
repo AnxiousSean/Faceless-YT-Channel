@@ -76,7 +76,9 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 ## Project layout & commands
 - `src/components/` — reusable kit: `Pip`, `ShadowSelf`, `Room`, `Glow`, `wobble` outlines, `Overlay` (narrator, shadow line, DAY counter, rep pops, hit FX, letterbox), `theme` colours.
 - `src/films/` — one file per film; register it in `src/Root.tsx`.
-- `scripts/make-sfx.mjs` — the sound synthesizer.
+- `src/components/look.tsx` — the Look system: colours, outlines, filters and overlays that decide HOW things are drawn. Story/timing/sound stay separate so any film can be re-rendered in another style.
+- `src/styles/looks.tsx` — experimental styles (Pixel Art, Paper Cut-out, Chalkboard, Neon, 1930s Film Reel). The channel default is `CLASSIC` unless the user picks another.
+- `scripts/make-sfx.mjs` — the sound synthesizer. `scripts/stills.mjs` — renders check stills.
 - `npm run sfx` → regenerate sounds · `npm run studio` → preview · `npm run render` → render to `out/`.
 
 ---

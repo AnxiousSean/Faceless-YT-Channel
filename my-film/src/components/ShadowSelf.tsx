@@ -1,9 +1,10 @@
 import React from 'react';
-import {VIOLET} from './theme';
+import {useLook} from './look';
 
-// The Shadow: Pip's body, pure black, taller, glowing violet outline, two slit eyes.
+// The Shadow: Pip's body, pure black, taller, glowing accent outline, two slit eyes.
 // grow: 1 = normal (1.15x Pip). Bigger when Pip is weaker. rise: 0..1 emerging from floor.
 export const ShadowSelf: React.FC<{x: number; y: number; frame: number; grow: number; rise: number; glow?: number; lean?: number}> = ({x, y, frame, grow, rise, glow = 1, lean = 0}) => {
+  const L = useLook();
   const sway = Math.sin(frame * 0.05) * 4;
   const handL: [number, number] = [-62, -36 + sway];
   const handR: [number, number] = [62, -36 - sway];
@@ -20,19 +21,21 @@ export const ShadowSelf: React.FC<{x: number; y: number; frame: number; grow: nu
   );
   const flick = 0.85 + 0.15 * Math.sin(frame * 0.6) * Math.sin(frame * 0.23);
   return (
-    <g transform={`translate(${x} ${y}) skewX(${lean}) scale(${grow} ${grow * 1.15 * rise})`} opacity={Math.min(1, rise * 1.5)}>
-      <defs>
-        <filter id="vglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation={14} /></filter>
-        <filter id="vglowS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation={4} /></filter>
-      </defs>
-      <g filter="url(#vglow)" opacity={0.85 * glow * flick}>{shapes(VIOLET, 26, 8)}</g>
-      {shapes(VIOLET, 20, 3)}
-      {shapes('#000000', 14, 0)}
-      {/* slit eyes */}
-      <g stroke={VIOLET} strokeWidth={6} strokeLinecap="round">
-        <g filter="url(#vglowS)"><path d="M -44 -214 L -12 -202" /><path d="M 44 -214 L 12 -202" /></g>
-        <path d="M -44 -214 L -12 -202" stroke="#E6D4FF" strokeWidth={3} />
-        <path d="M 44 -214 L 12 -202" stroke="#E6D4FF" strokeWidth={3} />
+    <g filter={L.charFilter}>
+      <g transform={`translate(${x} ${y}) skewX(${lean}) scale(${grow} ${grow * 1.15 * rise})`} opacity={Math.min(1, rise * 1.5)}>
+        <defs>
+          <filter id="vglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation={14} /></filter>
+          <filter id="vglowS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation={4} /></filter>
+        </defs>
+        <g filter="url(#vglow)" opacity={0.85 * glow * flick * L.glow}>{shapes(L.accent, 26, 8)}</g>
+        {shapes(L.accent, 20, 3)}
+        {shapes(L.shadowBody, 14, 0)}
+        {/* slit eyes */}
+        <g stroke={L.accent} strokeWidth={6} strokeLinecap="round">
+          <g filter="url(#vglowS)"><path d="M -44 -214 L -12 -202" /><path d="M 44 -214 L 12 -202" /></g>
+          <path d="M -44 -214 L -12 -202" stroke={L.accentCore} strokeWidth={3} />
+          <path d="M 44 -214 L 12 -202" stroke={L.accentCore} strokeWidth={3} />
+        </g>
       </g>
     </g>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import {PIP, PIP_DARK, OUTLINE} from './theme';
+import {useLook} from './look';
 import {wobblyRect, wobblyLine} from './wobble';
 
 // Pip: big round head, no neck, dot eyes, one-line brows + mouth, noodle limbs, no fingers.
@@ -36,19 +36,25 @@ const brow = (side: number, angle: number, dy: number) => {
   return `M ${cx - side * h * Math.cos(a)} ${cy + h * Math.sin(a)} L ${cx + side * h * Math.cos(a)} ${cy - h * Math.sin(a)}`;
 };
 
-export const Barbell: React.FC<{y: number; frame: number}> = ({y, frame}) => (
-  <g>
-    <path d={wobblyLine(-150, y, 150, y, frame, 41, 0.8)} stroke="#B4B9C4" strokeWidth={7} strokeLinecap="round" fill="none" />
-    {[-1, 1].map((s) => (
-      <g key={s}>
-        <path d={wobblyRect(s * 118 - 14, y - 46, 28, 92, frame, 50 + s, 1.3)} fill="#2C303B" stroke={OUTLINE} strokeWidth={2.5} />
-        <path d={wobblyRect(s * 140 - 8, y - 30, 16, 60, frame, 60 + s, 1.2)} fill="#363B48" stroke={OUTLINE} strokeWidth={2.5} />
-      </g>
-    ))}
-  </g>
-);
+export const Barbell: React.FC<{y: number; frame: number}> = ({y, frame}) => {
+  const L = useLook();
+  const wf = L.wobbleStatic ? 0 : frame;
+  const line = {stroke: L.outlineW > 0 ? L.outline : 'none', strokeWidth: L.outlineW, fillOpacity: L.propFillOpacity};
+  return (
+    <g filter={L.propFilter}>
+      <path d={wobblyLine(-150, y, 150, y, wf, 41, 0.8 * L.wobble)} stroke={L.metal} strokeWidth={7} strokeLinecap="round" fill="none" />
+      {[-1, 1].map((s) => (
+        <g key={s}>
+          <path d={wobblyRect(s * 118 - 14, y - 46, 28, 92, wf, 50 + s, 1.3 * L.wobble)} fill={L.plate} {...line} />
+          <path d={wobblyRect(s * 140 - 8, y - 30, 16, 60, wf, 60 + s, 1.2 * L.wobble)} fill={L.plate2} {...line} />
+        </g>
+      ))}
+    </g>
+  );
+};
 
 export const Pip: React.FC<PipPose> = (p) => {
+  const L = useLook();
   const {x, y, frame, scale = 1, squash = 0, browL = 0, browR = 0, browY = 0, mouth = 0, mouthOpen = 0, blink = 0, look = 0, barY = null, headband = 0} = p;
   const handL: [number, number] = barY !== null ? [-66, barY] : p.handL ?? [-58, -40];
   const handR: [number, number] = barY !== null ? [66, barY] : p.handR ?? [58, -40];
@@ -56,39 +62,51 @@ export const Pip: React.FC<PipPose> = (p) => {
   const sy = scale * (1 - squash);
   const eyeRy = 8 * Math.max(0.12, 1 - blink);
   const tail = Math.sin(frame * 0.25) * 8;
+  const inked = L.pipFillOpacity >= 1 && L.pipStrokeW > 0; // solid fill with ink outline
+  const bodyStroke = {stroke: L.pipStrokeW > 0 ? L.pipStroke : 'none', strokeWidth: L.pipStrokeW, fillOpacity: L.pipFillOpacity};
+  const limb = (d: string, color: string) => (
+    <>
+      {inked && <path d={d} stroke={L.pipStroke} strokeWidth={L.limbW + 2 * L.pipStrokeW} strokeLinecap="round" fill="none" />}
+      <path d={d} stroke={color} strokeWidth={L.limbW} strokeLinecap="round" fill="none" />
+    </>
+  );
+  const clipId = `pipHead${x.toFixed(0)}`;
   return (
-    <g transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
-      <defs>
-        <clipPath id={`pipHead${x.toFixed(0)}`}><circle cx={0} cy={HEAD_Y} r={HEAD_R} /></clipPath>
-      </defs>
-      {/* legs */}
-      <path d="M -18 -40 Q -26 -18 -28 0" stroke={PIP_DARK} strokeWidth={15} strokeLinecap="round" fill="none" />
-      <path d="M 18 -40 Q 26 -18 28 0" stroke={PIP} strokeWidth={15} strokeLinecap="round" fill="none" />
-      {/* body + head (no neck) */}
-      <ellipse cx={0} cy={-90} rx={47} ry={58} fill={PIP} />
-      <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill={PIP} />
-      {/* Day-2 item: red headband */}
-      {headband > 0 && (
-        <g transform={`translate(0 ${HEAD_Y - 52}) scale(${headband}) translate(0 ${-(HEAD_Y - 52)})`}>
-          <path d={`M 66 ${HEAD_Y - 52} q 26 ${4 + tail * 0.3} 44 ${14 + tail}`} stroke="#E8484F" strokeWidth={10} strokeLinecap="round" fill="none" />
-          <path d={`M 66 ${HEAD_Y - 46} q 22 ${14 - tail * 0.3} 30 ${32 - tail * 0.5}`} stroke="#C23A41" strokeWidth={10} strokeLinecap="round" fill="none" />
-          <rect x={-90} y={HEAD_Y - 62} width={180} height={20} fill="#E8484F" clipPath={`url(#pipHead${x.toFixed(0)})`} />
-        </g>
-      )}
-      {/* face */}
-      <ellipse cx={-26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill="#1A1006" />
-      <ellipse cx={26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill="#1A1006" />
-      <path d={brow(-1, browL, browY)} stroke="#1A1006" strokeWidth={6} strokeLinecap="round" />
-      <path d={brow(1, browR, browY)} stroke="#1A1006" strokeWidth={6} strokeLinecap="round" />
-      {mouthOpen > 0.05 ? (
-        <ellipse cx={0} cy={HEAD_Y + 36} rx={10 + 6 * mouthOpen} ry={4 + 14 * mouthOpen} fill="#1A1006" />
-      ) : (
-        <path d={`M -19 ${HEAD_Y + 36} Q 0 ${HEAD_Y + 36 + mouth * 16} 19 ${HEAD_Y + 36}`} stroke="#1A1006" strokeWidth={5.5} strokeLinecap="round" fill="none" />
-      )}
-      {barY !== null && <Barbell y={barY} frame={frame} />}
-      {/* noodle arms on top (mitten ends, no fingers) */}
-      <path d={arm(-1, handL)} stroke={PIP} strokeWidth={14} strokeLinecap="round" fill="none" />
-      <path d={arm(1, handR)} stroke={PIP} strokeWidth={14} strokeLinecap="round" fill="none" />
+    <g filter={L.charFilter}>
+      <g transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
+        <defs>
+          <clipPath id={clipId}><circle cx={0} cy={HEAD_Y} r={HEAD_R} /></clipPath>
+        </defs>
+        {limb('M -18 -40 Q -26 -18 -28 0', L.pipDark)}
+        {limb('M 18 -40 Q 26 -18 28 0', L.pip)}
+        {/* body + head (no neck) */}
+        {inked && <ellipse cx={0} cy={-90} rx={47} ry={58} fill={L.pip} {...bodyStroke} />}
+        <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill={L.pip} {...bodyStroke} />
+        <ellipse cx={0} cy={-90} rx={inked ? 47 - L.pipStrokeW / 2 : 47} ry={inked ? 58 - L.pipStrokeW / 2 : 58} fill={L.pip}
+          {...(inked ? {stroke: 'none'} : bodyStroke)} />
+        {/* Day-2 item: headband */}
+        {headband > 0 && (
+          <g transform={`translate(0 ${HEAD_Y - 52}) scale(${headband}) translate(0 ${-(HEAD_Y - 52)})`}>
+            <path d={`M 66 ${HEAD_Y - 52} q 26 ${4 + tail * 0.3} 44 ${14 + tail}`} stroke={L.item} strokeWidth={10} strokeLinecap="round" fill="none" />
+            <path d={`M 66 ${HEAD_Y - 46} q 22 ${14 - tail * 0.3} 30 ${32 - tail * 0.5}`} stroke={L.itemDark} strokeWidth={10} strokeLinecap="round" fill="none" />
+            <rect x={-90} y={HEAD_Y - 62} width={180} height={20} fill={L.item} clipPath={`url(#${clipId})`} />
+          </g>
+        )}
+        {/* face */}
+        <ellipse cx={-26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill={L.face} />
+        <ellipse cx={26 + look} cy={HEAD_Y} rx={7.5} ry={eyeRy} fill={L.face} />
+        <path d={brow(-1, browL, browY)} stroke={L.face} strokeWidth={6} strokeLinecap="round" />
+        <path d={brow(1, browR, browY)} stroke={L.face} strokeWidth={6} strokeLinecap="round" />
+        {mouthOpen > 0.05 ? (
+          <ellipse cx={0} cy={HEAD_Y + 36} rx={10 + 6 * mouthOpen} ry={4 + 14 * mouthOpen} fill={L.face} />
+        ) : (
+          <path d={`M -19 ${HEAD_Y + 36} Q 0 ${HEAD_Y + 36 + mouth * 16} 19 ${HEAD_Y + 36}`} stroke={L.face} strokeWidth={5.5} strokeLinecap="round" fill="none" />
+        )}
+        {barY !== null && <Barbell y={barY} frame={frame} />}
+        {/* noodle arms on top (mitten ends, no fingers) */}
+        {limb(arm(-1, handL), L.pip)}
+        {limb(arm(1, handR), L.pip)}
+      </g>
     </g>
   );
 };

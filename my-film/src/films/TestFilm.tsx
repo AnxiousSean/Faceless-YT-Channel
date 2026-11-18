@@ -1,7 +1,8 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Easing, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import '../components/fonts';
-import {FLOOR_Y, FONT, VIOLET, BG, OUTLINE} from '../components/theme';
+import {FLOOR_Y, FONT} from '../components/theme';
+import {CLASSIC, FilterDefs, Look, LookContext, useLook} from '../components/look';
 import {Room} from '../components/Room';
 import {Pip, Barbell} from '../components/Pip';
 import {ShadowSelf} from '../components/ShadowSelf';
@@ -42,20 +43,23 @@ const ShotA: React.FC = () => {
 // ---------- SHOT B (30f): hard cut close-up, phone buzzes ----------
 const ShotB: React.FC = () => {
   const f = useCurrentFrame();
+  const L = useLook();
+  const wf = L.wobbleStatic ? 0 : f;
+  const line = {stroke: L.outlineW > 0 ? L.outline : 'none', strokeWidth: Math.max(3, L.outlineW)};
   const on = interpolate(f, [3, 5], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const buzzing = (f >= 3 && f < 9) || (f >= 11 && f < 17);
   const jx = buzzing ? Math.sin(f * 9.1) * 7 : 0;
   const pop = spring({frame: f - 5, fps: 30, config: {damping: 9, stiffness: 200}});
   return (
-    <AbsoluteFill style={{background: BG}}>
+    <AbsoluteFill style={{background: L.bg}}>
       <svg width={1920} height={1080} style={{position: 'absolute'}}>
-        <Glow id="cuPhone" cx={960} cy={560} r={700} color="#5EA8FF" opacity={0.55 * on} />
-        <g transform={`translate(${960 + jx} 560) rotate(-8) scale(${1 + 0.004 * f})`}>
-          <path d={wobblyRect(-190, -330, 380, 660, f, 31, 2)} fill="#14161D" stroke={OUTLINE} strokeWidth={3} />
-          <path d={wobblyRect(-166, -300, 332, 600, f, 32, 1.5)} fill={on > 0.5 ? '#2B5FA8' : '#0A0B10'} />
+        <Glow id="cuPhone" cx={960} cy={560} r={700} color={L.glowPhone} opacity={0.55 * on} />
+        <g transform={`translate(${960 + jx} 560) rotate(-8) scale(${1 + 0.004 * f})`} filter={L.propFilter}>
+          <path d={wobblyRect(-190, -330, 380, 660, wf, 31, 2 * L.wobble)} fill={L.phoneOff} fillOpacity={Math.max(0.3, L.propFillOpacity)} {...line} />
+          <path d={wobblyRect(-166, -300, 332, 600, wf, 32, 1.5 * L.wobble)} fill={on > 0.5 ? L.screen : L.bg} />
           {on > 0.5 && (
             <g transform={`translate(0 -150) scale(${pop})`}>
-              <path d={wobblyRect(-140, -55, 280, 110, f, 33, 1.5)} fill="#EAF2FF" stroke={OUTLINE} strokeWidth={2} />
+              <path d={wobblyRect(-140, -55, 280, 110, wf, 33, 1.5 * L.wobble)} fill="#EAF2FF" {...line} strokeWidth={2} />
               <text x={0} y={-8} textAnchor="middle" fontFamily={FONT} fontWeight={700} fontSize={40} fill="#14161D">Skip today?</text>
               <text x={0} y={34} textAnchor="middle" fontFamily={FONT} fontWeight={400} fontSize={26} fill="#4A4E5A">the couch is free</text>
             </g>
@@ -105,6 +109,7 @@ const WORD = 'STRONG';
 const LETTER_START = 4, LETTER_GAP = 4;
 const ShotD: React.FC = () => {
   const f = useCurrentFrame();
+  const L = useLook();
   const {fps} = useVideoConfig();
   const shown = Math.max(0, Math.min(WORD.length, Math.floor((f - LETTER_START) / LETTER_GAP) + 1));
   const draw = kf(f, [[26, 0], [42, 1]], Easing.out(Easing.cubic));
@@ -116,21 +121,21 @@ const ShotD: React.FC = () => {
   const fadeIn = (a: number) => interpolate(f, [a, a + 10], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const black = interpolate(f, [62, 75], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
-    <AbsoluteFill style={{background: BG}}>
-      <div style={{position: 'absolute', top: 360, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 220, color: 'white', letterSpacing: 8}}>
+    <AbsoluteFill style={{background: L.bg}}>
+      <div style={{position: 'absolute', top: 360, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 220, color: L.text, textShadow: L.textShadow, letterSpacing: 8}}>
         {WORD.split('').map((ch, i) => {
-          const s = i < shown ? spring({frame: f - (LETTER_START + i * LETTER_GAP), fps, config: {damping: 9, stiffness: 300}}) : 0;
+          const s = i < shown ? spring({frame: f - (LETTER_START + i * LETTER_GAP), fps, config: {damping: 15, stiffness: 300}}) : 0;
           return <span key={i} style={{display: 'inline-block', transform: `scale(${s}) translateY(${(1 - s) * 30}px)`, opacity: i < shown ? 1 : 0}}>{ch}</span>;
         })}
       </div>
       <svg width={1920} height={1080} style={{position: 'absolute'}}>
-        <path d={wave} stroke={VIOLET} strokeWidth={10} strokeLinecap="round" fill="none" pathLength={1}
-          strokeDasharray={1} strokeDashoffset={1 - draw} style={{filter: `drop-shadow(0 0 12px ${VIOLET})`}} />
+        <path d={wave} stroke={L.accent} strokeWidth={10} strokeLinecap="round" fill="none" pathLength={1}
+          strokeDasharray={1} strokeDashoffset={1 - draw} style={{filter: `drop-shadow(0 0 12px ${L.accent})`}} />
       </svg>
-      <div style={{position: 'absolute', top: 700, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 48, color: 'white', opacity: fadeIn(32)}}>
+      <div style={{position: 'absolute', top: 700, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 48 * Math.min(L.textScale, 1.3), color: L.text, textShadow: L.textShadow, opacity: fadeIn(32)}}>
         Every rep is a fight.
       </div>
-      <div style={{position: 'absolute', top: 775, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 36, color: VIOLET, opacity: fadeIn(42)}}>
+      <div style={{position: 'absolute', top: 775, width: '100%', textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 36 * Math.min(L.textScale, 1.3), color: L.accent, opacity: fadeIn(42)}}>
         Day 2 tomorrow.
       </div>
       <AbsoluteFill style={{background: 'black', opacity: black}} />
@@ -144,14 +149,18 @@ const S: React.FC<{at: number; file: string; vol?: number | ((f: number) => numb
 );
 
 const C = 135, D = 225;
-export const TestFilm: React.FC = () => (
-  <AbsoluteFill style={{background: 'black'}}>
+
+const Story: React.FC = () => (
+  <>
     <Sequence durationInFrames={105}><ShotA /></Sequence>
     <Sequence from={105} durationInFrames={30}><ShotB /></Sequence>
     <Sequence from={C} durationInFrames={90}><ShotC /></Sequence>
     <Sequence from={D} durationInFrames={75}><ShotD /></Sequence>
-    <Letterbox />
+  </>
+);
 
+const Soundtrack: React.FC = () => (
+  <>
     <Sequence durationInFrames={D} layout="none"><Audio src={staticFile('sfx/room.wav')} volume={0.35} /></Sequence>
     <S at={8} file="click" vol={0.8} />
     <S at={14} file="pop1" vol={0.5} />
@@ -167,5 +176,26 @@ export const TestFilm: React.FC = () => (
     <S at={C + 77} file="levelup" vol={0.6} />
     {WORD.split('').map((_, i) => <S key={i} at={D + LETTER_START + i * LETTER_GAP} file={`type${(i % 3) + 1}`} vol={0.6} />)}
     <S at={D + 26} file="chime" vol={0.55} />
-  </AbsoluteFill>
+  </>
 );
+
+// Same story + sound, drawn in any Look.
+export const StyledTestFilm: React.FC<{look: Look}> = ({look}) => {
+  const frame = useCurrentFrame();
+  const Post = look.Post;
+  return (
+    <LookContext.Provider value={look}>
+      <AbsoluteFill style={{background: look.bg}}>
+        <FilterDefs />
+        <AbsoluteFill style={{filter: look.frameFilter?.(frame), transform: look.weave?.(frame)}}>
+          <Story />
+        </AbsoluteFill>
+        {Post && <Post frame={frame} />}
+        <Letterbox />
+        <Soundtrack />
+      </AbsoluteFill>
+    </LookContext.Provider>
+  );
+};
+
+export const TestFilm: React.FC = () => <StyledTestFilm look={CLASSIC} />;

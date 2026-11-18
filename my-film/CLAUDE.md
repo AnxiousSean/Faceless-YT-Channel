@@ -41,19 +41,18 @@ Every film uses the **`HORROR` look** (`CHANNEL_LOOK` in `src/styles/looks.tsx`)
 - **Narrator lines**: small (~40px), **white**, **top centre** (just below the top bar), **8 words maximum**, **fade in and fade out** (~10 frames each). One line on screen at a time.
 - **Spoken lines** (a character or the menace speaking): positioned **beside the speaker**, on one line, kept inside the frame. Cast lines are white; the menace's lines are in the **red accent**, with a glow and dark edge. Same fade in/out.
 
-## 6. GAME FEEL
-- A small **DAY counter** in the **top left** (e.g. `DAY 1`), inside the frame below the bar. Ticks up with a little pop when the day changes.
-- **Rep counts pop on screen** (`+1`, `12`, `REP 30!`) with scale overshoot then settle/fade.
-- **After Day 1, the main character gains one visible item** (e.g. headband, cap, scarf — chosen per film) and **keeps it for the rest of the film**.
-- **Big hits** get **speed lines** and a **white flash** (2–4 frames).
-- **When a character runs or drives, the world scrolls past behind them** (parallax layers: far skyline slow, near buildings / street lights faster). The character stays roughly centred.
+## 6. STORY HUD
+- A small **clock or night counter** in the **top left** (e.g. `3:12 AM`, `NIGHT 4`), inside the frame below the bar. It ticks forward with a little pop when time jumps, so the audience always knows when they are. Pick whichever fits the story (time of night, day count, or both).
+- **Key-moment pop-ups**: a text message, an unknown caller, a doorbell alert, a missed call, a note found on the door. They pop on screen with scale overshoot, settle, then fade. Use them for the clues that drive the story.
+- **Jump scares** get a **hard cut** and a **brief red or white flash** (2–4 frames), with the `impact` sound. Use them sparingly; dread lasts longer than shocks.
+- **When a character runs or drives, the world scrolls past behind them** (parallax layers: far skyline slow, near buildings / street lights / trees faster). The character stays roughly centred.
 
 ## 7. ANIMATION
 - **Everything moves smoothly on every frame — never a slideshow.** Even "still" shots have breathing, blinking and glow flicker.
 - **Squash and stretch** on jumps, landings, impacts, reactions. Use `spring()` and `interpolate()` with easing.
-- **Locked camera.** No handheld shake except on big hits.
+- **Locked camera.** No handheld shake except on jump scares.
 - **Slow push-ins** (scale ~1.0 → 1.08 over the shot) on emotional moments.
-- **Hard cuts to close-ups of objects** (phone screen, alarm clock, a dumbbell, a door handle) to punctuate beats.
+- **Hard cuts to close-ups of objects** (phone screen, alarm clock, a door handle, a window, a camera feed) to punctuate beats.
 - Shot length: **calm shots hold 4–8 seconds**; **montage shots ≈1 second**.
 
 ## 8. TITLE CARD — last 12 seconds (360 frames)
@@ -69,13 +68,13 @@ Every film uses the **`HORROR` look** (`CHANNEL_LOOK` in `src/styles/looks.tsx`)
 - Any music, if a film uses it, follows the same rule: composed and synthesized in code.
 - The generator is **deterministic** (fixed random seed), so the same code always produces the same sounds.
 - Sounds are placed in Remotion with `<Sequence from={frame}><Audio src={staticFile('sfx/....wav')} /></Sequence>`, **synced to the exact frame** of the action (a click on the click, an impact on the hit frame).
-- Standard kit (add new sounds to the generator, don't import them): `click` (lamp switch), `pop1–3` (rep counts / UI, rising pitch), `whoosh` / `whoosh_low` (moves, the menace appearing), `buzz` (phone), `drone` (the menace's presence / dread), `impact` (big hits), `levelup` (new day / item), `type1–3` (title card letters), `chime` (title underline), `room` (quiet room tone).
-- Mix: quiet room tone under every scene; the menace always brings the drone; big hits = impact + pop together. Keep peaks below 0 dBFS (check with `ffmpeg -i out/x.mp4 -af volumedetect -vn -f null -`).
+- Standard kit (add new sounds to the generator, don't import them): `click` (lamp switch), `pop1–3` (pop-ups / UI, rising pitch), `whoosh` / `whoosh_low` (moves, the menace appearing), `buzz` (phone), `drone` (the menace's presence / dread), `impact` (jump scares), `levelup` (unused for horror), `type1–3` (title card letters), `chime` (title underline), `room` (quiet room tone).
+- Mix: quiet room tone under every scene; the menace always brings the drone; jump scares = impact + flash together. Keep peaks below 0 dBFS (check with `ffmpeg -i out/x.mp4 -af volumedetect -vn -f null -`).
 
 ---
 
 ## Project layout & commands
-- `src/components/` — reusable kit: `Pip`, `ShadowSelf`, `Room`, `Glow`, `wobble` outlines, `Overlay` (narrator, shadow line, DAY counter, rep pops, hit FX, letterbox), `theme` colours.
+- `src/components/` — reusable kit: `Pip`, `ShadowSelf`, `Room`, `Glow`, `wobble` outlines, `Overlay` (narrator, spoken lines, clock/night counter, pop-ups, flash FX, letterbox), `theme` colours.
 - `src/films/` — one file per film; register it in `src/Root.tsx`.
 - `src/components/look.tsx` — the Look system: colours, outlines, filters and overlays that decide HOW things are drawn. Story/timing/sound stay separate so any film can be re-rendered in another style.
 - `src/styles/looks.tsx` — the styles. **`HORROR` (Horror Ink) is the channel style** and the default for every film (`CHANNEL_LOOK`). Others (Classic, Pixel Art, Paper Cut-out, Chalkboard, Neon, 1930s Film Reel) are kept only for experiments.
@@ -91,7 +90,7 @@ Every film uses the **`HORROR` look** (`CHANNEL_LOOK` in `src/styles/looks.tsx`)
 - [ ] Cast designed for this story, in the shared drawing style.
 - [ ] Menace (if used) matches the spec and grows as the danger closes in.
 - [ ] Narrator lines ≤ 8 words, top centre, fading. Spoken lines beside the speaker (menace lines in red).
-- [ ] DAY counter, count pops, the main character's post-Day-1 item persists, speed lines + flash on hits, city scroll on runs.
+- [ ] Clock/night counter, key-moment pop-ups, jump scares with hard cut + flash (sparingly), world scrolls on runs/drives.
 - [ ] No frame where nothing moves. Shot lengths follow the calm/montage rule.
 - [ ] Final 12s title card exactly as specified.
 - [ ] All sound effects (and any music) synthesized in code; no samples or downloaded audio; peaks below 0 dBFS.

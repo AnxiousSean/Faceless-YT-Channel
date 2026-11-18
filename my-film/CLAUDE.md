@@ -12,13 +12,19 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 - **No voiceover.** Story is told through animation, on-screen text and sound only.
 - **Everything is drawn in code in Remotion** (SVG / React). No AI video, no stock footage, no imported images of characters or props.
 
-## 2. LOOK
-- **Very dark backgrounds** (near-black navy/charcoal, e.g. `#0B0D14`–`#151823`).
-- A **thin grey floor line** (`#4A4E5A`, ~2px) across the scene.
+## 2. LOOK — PIXEL ART (the channel style)
+Every film uses the **`PIXEL` look** (`src/styles/looks.tsx`). It is chosen and locked in; other looks are only for experiments the user asks for.
+- **Chunky pixels:** the whole frame (scene, characters and text) passes through the `pixelate` filter, **7×7 screen-pixel blocks** (≈274×154 art resolution, upscaled to 1080p). Only the letterbox bars sit outside it and stay crisp.
+- **Limited palette:** colours are posterized to **9 steps per channel**, so glows fall off in **hard, banded rings** like a 16-bit console game, never smooth gradients.
+- **Very dark backgrounds:** deep night navy (`#1A1036` wall, `#0A0618` floor area).
+- A **floor line** across the scene (`#6A70A0`, ~7px so it survives pixelation).
 - **Side-on view**, like a 2D video game. Characters walk left/right along the floor line.
 - **Light only comes from objects in the scene**: lamp, phone screen, street light, the moon, a spotlight, a fridge, a TV. No ambient light from nowhere.
-- **Big soft glows** around every light source (large radial gradients / blurred circles, low opacity, warm or cool to match the source). Characters and props near a light pick up a subtle rim of that colour.
-- **Props are simple flat shapes** with **thin, wobbly grey outlines** (`#8A8F9C`, ~2–3px). Wobble = outline path jittered slightly per frame with seeded noise so it "boils" gently.
+- **Big glows** around every light source (large radial gradients that the palette turns into stepped rings), warm or cool to match the source.
+- **Props are simple flat shapes** with **solid, steady grey-lilac outlines** (`#7C80A8`, ~5px). **No wobble**: pixel art outlines stay clean.
+- **Characters have a dark sprite outline** (Pip: `#3B1A06`, ~6px around body, head and limbs) so they pop like game sprites.
+- Keep details **big enough to survive 7px pixels**: lines at least ~5px thick, eyes and brows as drawn on Pip, no fine hairlines.
+- Motion stays smooth every frame; it simply snaps to the pixel grid.
 
 ## 3. THE CHARACTER — "Pip"
 - Body colour: **warm tangerine `#FF9F45`** (darker shade `#D9772A` for the far-side limbs).
@@ -30,15 +36,16 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 
 ## 4. THE SHADOW — his inner voice
 - **Same body shape as Pip, but pure black (`#000000`) and taller** (starts ~1.15× Pip's height).
-- **Glowing outline in the accent colour: electric violet `#A259FF`** (soft outer glow, thin crisp edge).
+- **Glowing outline in the accent colour: violet** (`#C38BFF` in pixel art; `#A259FF` base). Outer glow, crisp edge.
 - **Two slit eyes** in the accent colour — no eyebrows, no mouth line (expression from eye shape and body posture).
 - **It grows as Pip gets weaker.** Shadow scale is tied to Pip's state: confident Pip → shadow small/behind him; defeated Pip → shadow looms (up to ~2× Pip's height), glow brighter.
 - Moves smoothly and a little *too* smoothly — slower, floatier easing than Pip.
 
 ## 5. TEXT
 - Font: **Comic Neue** (load via `@remotion/google-fonts/ComicNeue`). Nothing else.
-- **Narrator lines**: small (~40px), **white**, **top centre** (just below the top bar), **8 words maximum**, **fade in and fade out** (~10 frames each). One line on screen at a time.
-- **Shadow lines**: in the **accent violet `#A259FF`**, positioned **beside the Shadow** (not top centre), with a faint glow. Same fade in/out.
+- Pixel-art text sizes are **1.75× the base sizes** (`textScale` in the PIXEL look) so letters stay readable after pixelation.
+- **Narrator lines**: small (base 40px → ~70px on screen), **white**, **top centre** (just below the top bar), **8 words maximum**, **fade in and fade out** (~10 frames each). One line on screen at a time.
+- **Shadow lines**: in the **accent violet (`#C38BFF` in pixel art, brighter so it survives the palette)**, positioned **beside the Shadow** (not top centre), on one line, kept inside the frame, with a glow and dark edge. Same fade in/out.
 
 ## 6. GAME FEEL
 - A small **DAY counter** in the **top left** (e.g. `DAY 1`), inside the frame below the bar. Ticks up with a little pop when the day changes.
@@ -48,7 +55,7 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 - **When Pip runs, the city scrolls past behind him** (parallax layers: far skyline slow, near buildings / street lights faster). Pip stays roughly centred.
 
 ## 7. ANIMATION
-- **Everything moves smoothly on every frame — never a slideshow.** Even "still" shots have breathing, blinking, glow flicker, outline boil.
+- **Everything moves smoothly on every frame — never a slideshow.** Even "still" shots have breathing, blinking and glow flicker.
 - **Squash and stretch** on jumps, landings, impacts, reactions. Use `spring()` and `interpolate()` with easing.
 - **Locked camera.** No handheld shake except on big hits.
 - **Slow push-ins** (scale ~1.0 → 1.08 over the shot) on emotional moments.
@@ -77,7 +84,7 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 - `src/components/` — reusable kit: `Pip`, `ShadowSelf`, `Room`, `Glow`, `wobble` outlines, `Overlay` (narrator, shadow line, DAY counter, rep pops, hit FX, letterbox), `theme` colours.
 - `src/films/` — one file per film; register it in `src/Root.tsx`.
 - `src/components/look.tsx` — the Look system: colours, outlines, filters and overlays that decide HOW things are drawn. Story/timing/sound stay separate so any film can be re-rendered in another style.
-- `src/styles/looks.tsx` — experimental styles (Pixel Art, Paper Cut-out, Chalkboard, Neon, 1930s Film Reel). The channel default is `CLASSIC` unless the user picks another.
+- `src/styles/looks.tsx` — the styles. **`PIXEL` is the channel style** and the default for every film. Others (Classic, Paper Cut-out, Chalkboard, Neon, 1930s Film Reel) are kept only for experiments.
 - `scripts/make-sfx.mjs` — the sound synthesizer. `scripts/stills.mjs` — renders check stills.
 - `npm run sfx` → regenerate sounds · `npm run studio` → preview · `npm run render` → render to `out/`.
 
@@ -85,7 +92,8 @@ The reference screenshots set the general *feel* (bold, expressive, comedic-but-
 
 ## Workflow checklist for each film
 - [ ] Composition is 1920×1080 @ 30fps, 3600–5400 frames, letterbox bars on top layer.
-- [ ] Only scene-object light sources, with big soft glows.
+- [ ] Rendered in the PIXEL look (pixelated, banded glows, sprite outlines, no wobble).
+- [ ] Only scene-object light sources, with big glows.
 - [ ] Pip and the Shadow match the specs above (colours, proportions, features).
 - [ ] Shadow size tracks Pip's weakness through the story.
 - [ ] Narrator lines ≤ 8 words, top centre, fading. Shadow lines violet, beside the Shadow.

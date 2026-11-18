@@ -123,3 +123,6 @@ export const VINTAGE: Look = {
 };
 
 export const STYLES: Look[] = [PIXEL, PAPER, CHALK, NEON, VINTAGE];
+
+// The channel's chosen style. Every film renders with this unless the user asks for an experiment.
+export const CHANNEL_LOOK = PIXEL;

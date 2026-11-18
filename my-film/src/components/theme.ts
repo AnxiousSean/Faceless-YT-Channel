@@ -1,0 +1,11 @@
+export const BG = '#0C0E16';
+export const BG_LOW = '#08090E';
+export const FLOOR_LINE = '#4A4E5A';
+export const OUTLINE = '#8A8F9C';
+export const PIP = '#FF9F45';
+export const PIP_DARK = '#D9772A';
+export const VIOLET = '#A259FF';
+export const REP_YELLOW = '#FFD45A';
+export const FONT = "'Comic Neue', sans-serif";
+export const BAR_H = 60;
+export const FLOOR_Y = 860;

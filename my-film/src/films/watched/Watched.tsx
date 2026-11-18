@@ -5,6 +5,7 @@ import {FilterDefs, Look, LookContext} from '../../components/look';
 import {CHANNEL_LOOK} from '../../styles/looks';
 import {Letterbox} from '../../components/Overlay';
 import {S1, S2, S3, S4, S5, S6, S7, S8, S9, DOT_ON_S3, DOT_OFF_S5, MONTAGE, SCRUBS, EYES_AT} from './shots1';
+import {S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, CREAK_S10, S11_CUTS, SLAM_S12, TAPE_S13, TEXTS_S14, CALL_S15, REPLY_S15, CHIME_S16, CLOCK_S16, CAM2_S17, HEART_S17, SCARE_S19} from './shots2';
 
 // Shot table (frames). Part 1 = shots 1-9 (0:00-1:18).
 export const SHOTS1: [React.FC, number, number][] = [
@@ -12,6 +13,12 @@ export const SHOTS1: [React.FC, number, number][] = [
   [S6, 1020, 300], [S7, 1320, 300], [S8, 1620, 360], [S9, 1980, 360],
 ];
 export const WATCHED_PART1_FRAMES = 2340;
+// Part 2 = shots 10-19 (1:18-2:55)
+export const SHOTS2: [React.FC, number, number][] = [
+  [S10, 2340, 300], [S11, 2640, 300], [S12, 2940, 300], [S13, 3240, 360], [S14, 3600, 240],
+  [S15, 3840, 360], [S16, 4200, 300], [S17, 4500, 420], [S18, 4920, 240], [S19, 5160, 90],
+];
+export const WATCHED_FRAMES = 5250; // grows as parts are added (final: 7200)
 
 const Sfx: React.FC<{at: number; file: string; vol?: number | ((f: number) => number); dur?: number; loop?: boolean}> = ({at, file, vol = 1, dur, loop}) => (
   <Sequence from={at} durationInFrames={dur} layout="none"><Audio src={staticFile(`sfx/${file}.wav`)} volume={vol} loop={loop} /></Sequence>
@@ -19,7 +26,7 @@ const Sfx: React.FC<{at: number; file: string; vol?: number | ((f: number) => nu
 
 const SoundPart1: React.FC = () => (
   <>
-    <Sfx at={0} file="room" vol={0.4} dur={WATCHED_PART1_FRAMES} loop />
+    <Sfx at={0} file="room" vol={0.4} dur={4960} loop />
     {/* typing */}
     <Sfx at={0} file="keys" vol={0.5} dur={336} loop />
     <Sfx at={780 + 145} file="keys" vol={0.5} dur={95} loop />
@@ -42,16 +49,57 @@ const SoundPart1: React.FC = () => (
   </>
 );
 
-export const WatchedPart1: React.FC<{look?: Look}> = ({look = CHANNEL_LOOK}) => {
+const SoundPart2: React.FC = () => (
+  <>
+    <Sfx at={2340} file="drone" vol={0.35} dur={96} />
+    <Sfx at={2340 + CREAK_S10} file="creak" vol={0.9} />
+    {S11_CUTS.map(([t]) => <Sfx key={t} at={2640 + t} file="thud" vol={0.8} />)}
+    <Sfx at={2640} file="drone" vol={(f) => interpolate(f, [0, 30, 270, 300], [0, 0.7, 0.8, 0.4], {extrapolateRight: 'clamp'})} dur={300} />
+    <Sfx at={2940} file="drone" vol={(f) => interpolate(f, [0, 110, 120], [0.4, 0.5, 0], {extrapolateRight: 'clamp'})} dur={120} />
+    <Sfx at={2940 + SLAM_S12} file="thud" vol={0.9} />
+    <Sfx at={2940 + SLAM_S12} file="click" vol={0.7} />
+    <Sfx at={3240 + 6} file="pop1" vol={0.35} />
+    <Sfx at={3240 + TAPE_S13 - 14} file="tape" vol={0.9} />
+    <Sfx at={3240 + 220} file="keys" vol={0.5} dur={140} loop />
+    {TEXTS_S14.map((t) => <Sfx key={t} at={3600 + t} file="buzz" vol={0.8} />)}
+    {TEXTS_S14.map((t) => <Sfx key={`p${t}`} at={3600 + t} file="pop2" vol={0.45} />)}
+    <Sfx at={3600 + 110} file="drone" vol={(f) => interpolate(f, [0, 40], [0, 0.45], {extrapolateRight: 'clamp'})} dur={130} />
+    <Sfx at={3840 + CALL_S15} file="ring" vol={0.6} dur={100} />
+    <Sfx at={3840 + REPLY_S15} file="buzz" vol={0.6} />
+    <Sfx at={3840 + REPLY_S15} file="pop1" vol={0.4} />
+    <Sfx at={3840 + 300} file="step" vol={0.5} />
+    <Sfx at={3840 + 330} file="step" vol={0.5} />
+    <Sfx at={4200 + CHIME_S16} file="blip" vol={0.7} />
+    <Sfx at={4200 + CHIME_S16} file="pop2" vol={0.5} />
+    <Sfx at={4200 + CLOCK_S16} file="pop3" vol={0.5} />
+    <Sfx at={4200 + CLOCK_S16} file="whoosh_low" vol={0.6} />
+    <Sfx at={4200 + CLOCK_S16} file="drone" vol={(f) => interpolate(f, [0, 60], [0, 0.6], {extrapolateRight: 'clamp'})} dur={200} />
+    <Sfx at={4500 + CAM2_S17} file="whoosh_low" vol={0.7} />
+    <Sfx at={4500} file="drone" vol={(f) => interpolate(f, [0, 380, 420], [0.6, 0.9, 0.9], {extrapolateRight: 'clamp'})} dur={420} />
+    <Sfx at={4500 + HEART_S17} file="heartbeat" vol={0.8} dur={120} />
+    <Sfx at={4500 + HEART_S17 + 120} file="heartbeat" vol={0.9} dur={120} />
+    <Sfx at={4500 + HEART_S17 + 240} file="heartbeat" vol={1} dur={120} />
+    {/* 18: everything drops away; one creak in the silence */}
+    <Sfx at={4920} file="drone" vol={(f) => interpolate(f, [0, 40], [0.9, 0], {extrapolateRight: 'clamp'})} dur={40} />
+    <Sfx at={4920 + 80} file="creak" vol={0.5} />
+    {/* 19: the scare */}
+    <Sfx at={5160 + SCARE_S19} file="impact" vol={0.8} />
+    <Sfx at={5160 + SCARE_S19} file="whoosh" vol={0.6} />
+    <Sfx at={5160 + SCARE_S19 + 8} file="slam" vol={0.6} />
+  </>
+);
+
+export const Watched: React.FC<{look?: Look}> = ({look = CHANNEL_LOOK}) => {
   const Post = look.Post;
   return (
     <LookContext.Provider value={look}>
       <AbsoluteFill style={{background: look.bg}}>
         <FilterDefs />
-        {SHOTS1.map(([C, from, dur], i) => <Sequence key={i} from={from} durationInFrames={dur}><C /></Sequence>)}
+        {[...SHOTS1, ...SHOTS2].map(([C, from, dur], i) => <Sequence key={i} from={from} durationInFrames={dur}><C /></Sequence>)}
         {Post && <PostLayer Post={Post} />}
         <Letterbox />
         <SoundPart1 />
+        <SoundPart2 />
       </AbsoluteFill>
     </LookContext.Provider>
   );

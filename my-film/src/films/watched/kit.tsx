@@ -103,9 +103,11 @@ export const Desk: React.FC<{frame: number}> = ({frame}) => {
 };
 
 // Laptop seen side-on: screen faces left (toward Theo). screen = brightness 0..1, dot = webcam light 0..1
-export const Laptop: React.FC<{frame: number; screen: number; dot: number}> = ({frame, screen, dot}) => {
+export const Laptop: React.FC<{frame: number; screen: number; dot: number; lid?: number}> = ({frame, screen: scr, dot: dt, lid = 1}) => {
   const L = useLook();
-  const {hx, hy, tx, ty} = AP.lid;
+  const {hx, hy} = AP.lid;
+  const tx = hx - 172 + (AP.lid.tx - hx + 172) * lid, ty = hy - 4 + (AP.lid.ty - hy + 4) * lid;
+  const screen = scr * lid, dot = dt * (lid > 0.6 ? 1 : 0);
   return (
     <g>
       <Glow id="lapGlow" cx={tx - 40} cy={(hy + ty) / 2} r={520} color="#9CC4FF" opacity={0.42 * screen} />
@@ -115,8 +117,8 @@ export const Laptop: React.FC<{frame: number; screen: number; dot: number}> = ({
       <path d={`M ${hx - 6} ${hy + 2} L ${tx - 6} ${ty + 6}`} stroke="#CFE3FF" strokeWidth={4} strokeLinecap="round" opacity={0.25 + 0.75 * screen} />
       {dot > 0 && (
         <>
-          <Glow id="camDotGlow" cx={AP.cam.x} cy={AP.cam.y} r={46} color={L.accent} opacity={0.9 * dot} />
-          <circle cx={AP.cam.x - 6} cy={AP.cam.y} r={4.5} fill={L.accent} opacity={dot} />
+          <Glow id="camDotGlow" cx={tx - 6} cy={ty + 8} r={46} color={L.accent} opacity={0.9 * dot} />
+          <circle cx={tx - 12} cy={ty + 8} r={4.5} fill={L.accent} opacity={dot} />
         </>
       )}
     </g>
@@ -139,9 +141,50 @@ export const Fridge: React.FC<{frame: number; open: number}> = ({frame, open}) =
   );
 };
 
-export const Hallway: React.FC<{frame: number; beam?: number; beamAngle?: number}> = ({frame}) => {
+export type Beam = {x0: number; y0: number; x1: number; y1: number; spread: number};
+const conePts = (b: Beam, extend = 1.6) => {
+  const dx = b.x1 - b.x0, dy = b.y1 - b.y0; const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const ex = b.x0 + dx * extend, ey = b.y0 + dy * extend;
+  const sp = b.spread * extend;
+  return `${b.x0},${b.y0} ${ex + nx * sp},${ey + ny * sp} ${ex - nx * sp},${ey - ny * sp}`;
+};
+export const BeamCone: React.FC<{beam: Beam}> = ({beam}) => (
+  <g>
+    <defs>
+      <radialGradient id="beamG" cx={beam.x0} cy={beam.y0} r={Math.hypot(beam.x1 - beam.x0, beam.y1 - beam.y0) * 1.6} gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FFF6E0" stopOpacity={0.55} />
+        <stop offset="100%" stopColor="#FFF6E0" stopOpacity={0} />
+      </radialGradient>
+    </defs>
+    <polygon points={conePts(beam)} fill="url(#beamG)" style={{mixBlendMode: 'screen'}} />
+  </g>
+);
+export const PhoneProp: React.FC<{x: number; y: number; on: number}> = ({x, y, on}) => (
+  <g>
+    <Glow id="phoneHandGlow" cx={x + 10} cy={y - 30} r={220} color="#9CC4FF" opacity={0.85 * on} />
+    <rect x={x - 12} y={y - 22} width={24} height={42} rx={5} fill={on > 0.3 ? '#BFD8FF' : '#14161D'} stroke="#030305" strokeWidth={3} />
+  </g>
+);
+
+export const Hallway: React.FC<{frame: number; beam?: Beam | null}> = ({frame, beam}) => {
   const line = useLine();
   const {x, w, top} = AP.hall;
+  const lit = beam ? (
+    <g clipPath="url(#hallBeamClip)">
+      <defs><clipPath id="hallBeamClip"><polygon points={conePts(beam)} /></clipPath></defs>
+      <rect x={x} y={top} width={w} height={F - top} fill="#2A2E38" />
+      <rect x={x} y={top} width={w} height={40} fill="#3A3F4C" />
+      <rect x={x + 52} y={top + 90} width={8} height={F - top - 90} fill="#5A5F6E" />
+      <ellipse cx={x + 40} cy={top + 170} rx={30} ry={70} fill="#5B3A3A" />
+      <ellipse cx={x + 78} cy={top + 160} rx={24} ry={60} fill="#3D4A5E" />
+      <rect x={x + 200} y={top + 60} width={70} height={F - top - 60} fill="#3B3F4C" stroke="#1A1C24" strokeWidth={3} />
+      <rect x={x + 192} y={top + 60} width={10} height={F - top - 60} fill="#050608" />
+      <circle cx={x + 214} cy={top + 300} r={6} fill="#8A8F9C" />
+      {/* the hatch above the closet: closed, just a square seam in the ceiling */}
+      <rect x={x + 180} y={top + 6} width={90} height={26} fill="none" stroke="#1A1C24" strokeWidth={3} />
+    </g>
+  ) : null;
   return (
     <g>
       <rect x={x} y={top} width={w} height={F - top} fill="#010102" />
@@ -154,6 +197,7 @@ export const Hallway: React.FC<{frame: number; beam?: number; beamAngle?: number
         <rect x={x + 200} y={top + 60} width={70} height={F - top - 60} fill="#07080C" />
         <path d={`M ${x + 200} ${top + 60} L ${x + 188} ${F}`} stroke="#14171F" strokeWidth={3} />
       </g>
+      {lit}
     </g>
   );
 };
@@ -173,12 +217,14 @@ export const Window: React.FC<{frame: number}> = ({frame}) => {
 
 // ---------------- The full apartment shot ----------------
 export const Apartment: React.FC<{
-  frame: number; theo?: PipPose | null; screen?: number; dot?: number; fridge?: number; dark?: number;
+  frame: number; theo?: PipPose | null; screen?: number; dot?: number; fridge?: number; dark?: number; lid?: number; beam?: Beam | null; phone?: {x: number; y: number; on: number} | null;
   push?: {s: number; ox: number; oy: number}; extraLights?: Light[]; behind?: React.ReactNode; front?: React.ReactNode;
-}> = ({frame, theo, screen = 1, dot = 0, fridge = 0, dark = 0.62, push, extraLights = [], behind, front}) => {
+}> = ({frame, theo, screen = 1, dot = 0, fridge = 0, dark = 0.62, push, extraLights = [], behind, front, lid = 1, beam = null, phone = null}) => {
   const L = useLook();
   const lights: Light[] = [
-    {x: AP.lid.tx - 120, y: AP.cam.y + 80, r: 560 * screen + 1, k: screen},
+    {x: AP.lid.tx - 120, y: AP.cam.y + 80, r: 560 * screen * lid + 1, k: screen * lid},
+    ...(beam ? [{x: beam.x1, y: beam.y1, r: 300, k: 0.9}, {x: (beam.x0 + beam.x1) / 2, y: (beam.y0 + beam.y1) / 2, r: 200, k: 0.6}] : []),
+    ...(phone && phone.on > 0 ? [{x: phone.x + 20, y: phone.y - 60, r: 340, k: phone.on}] : []),
     {x: AP.window.x + 130, y: AP.window.y + 60, r: 260, k: 0.6},
     {x: AP.fridge.x + 60, y: AP.fridge.top + 240, r: 640 * fridge + 1, k: fridge},
     ...extraLights,
@@ -190,13 +236,15 @@ export const Apartment: React.FC<{
         <rect width={1920} height={1080} fill={L.bg} />
         <rect y={F} width={1920} height={1080 - F} fill={L.bgLow} />
         <Window frame={frame} />
-        <Hallway frame={frame} />
+        <Hallway frame={frame} beam={beam} />
         {behind}
         <Fridge frame={frame} open={fridge} />
         <Desk frame={frame} />
         <Chair x={AP.chairX} frame={frame} />
         {theo && <Pip {...theo} />}
-        <Laptop frame={frame} screen={screen} dot={dot} />
+        <Laptop frame={frame} screen={screen} dot={dot} lid={lid} />
+        {beam && <BeamCone beam={beam} />}
+        {phone && <PhoneProp {...phone} />}
         {front}
         <path d={`M 0 ${F} L 1920 ${F}`} stroke={L.floor} strokeWidth={L.floorW} />
         <Darkness id="apDark" lights={lights} amount={dark} />
@@ -206,7 +254,7 @@ export const Apartment: React.FC<{
 };
 
 // ---------------- Close-up: the webcam lens and its light ----------------
-export const WebcamClose: React.FC<{frame: number; dot: number; push?: number}> = ({frame, dot, push = 1}) => {
+export const WebcamClose: React.FC<{frame: number; dot: number; push?: number; tape?: number}> = ({frame, dot, push = 1, tape = 0}) => {
   const L = useLook();
   return (
     <AbsoluteFill style={{background: '#050508', transform: `scale(${push})`}}>
@@ -221,6 +269,13 @@ export const WebcamClose: React.FC<{frame: number; dot: number; push?: number}> 
         <circle cx={1090} cy={430} r={15} fill={dot > 0.05 ? L.accent : '#2A1416'} />
         {dot > 0.05 && <circle cx={1086} cy={426} r={5} fill="#FFD0D0" opacity={dot} />}
         <path d={wobblyLine(0, 750, 1920, 750, frame, 3, 0.4)} stroke="#2E3240" strokeWidth={3} />
+        {tape > 0 && (
+          <g transform={`translate(${900 + (1 - tape) * 1200} 430) rotate(-4)`}>
+            <rect x={-150} y={-46} width={300} height={92} fill="#D8CDB0" opacity={0.95} />
+            <path d="M -150 -46 l 10 12 l -10 12 l 10 12 l -10 12 l 10 12 l -10 12 l 10 12" fill="none" stroke="#B9AE92" strokeWidth={2} />
+            <rect x={-150} y={-46} width={300} height={92} fill="none" stroke="#030305" strokeWidth={3} />
+          </g>
+        )}
       </svg>
     </AbsoluteFill>
   );
@@ -228,8 +283,8 @@ export const WebcamClose: React.FC<{frame: number; dot: number; push?: number}> 
 
 // ---------------- Camera footage (what the webcam saw) ----------------
 // Rendered into a w x h box. step = how far the Watcher has come (0 = only eyes deep in the hall). eyes = slit opacity.
-export const CamFeed: React.FC<{frame: number; w: number; h: number; stamp: string; eyes?: number; blink?: number; watcher?: number; watcherX?: number; live?: boolean; theoBack?: boolean}> =
-  ({frame, w, h, stamp, eyes = 0, blink = 0, watcher = 0, watcherX = 0.3, live = false, theoBack = false}) => {
+export const CamFeed: React.FC<{frame: number; w: number; h: number; stamp: string; eyes?: number; blink?: number; watcher?: number; watcherX?: number; live?: boolean; theoBack?: boolean; arm?: number; zoom?: number}> =
+  ({frame, w, h, stamp, eyes = 0, blink = 0, watcher = 0, watcherX = 0.3, live = false, theoBack = false, arm = 0, zoom = 1}) => {
   const L = useLook();
   const seed = frame % 7;
   return (
@@ -238,7 +293,8 @@ export const CamFeed: React.FC<{frame: number; w: number; h: number; stamp: stri
         <filter id={`feedNoise${seed}`}><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed={seed} /><feColorMatrix type="saturate" values="0" /></filter>
         <radialGradient id="feedVig"><stop offset="50%" stopColor="#000" stopOpacity={0} /><stop offset="100%" stopColor="#000" stopOpacity={0.85} /></radialGradient>
       </defs>
-      <rect width={1000} height={560} fill="#1B211F" />
+      <g transform={`translate(${500 - 500 * zoom} ${300 - 300 * zoom}) scale(${zoom})`}>
+      <rect x={-200} y={-200} width={1400} height={960} fill="#1B211F" />
       {/* hallway opening behind the chair */}
       <rect x={140} y={40} width={330} height={520} fill="#030404" />
       <rect x={140} y={40} width={330} height={520} fill="none" stroke="#2C3431" strokeWidth={4} />
@@ -270,6 +326,13 @@ export const CamFeed: React.FC<{frame: number; w: number; h: number; stamp: stri
         <rect x={470} y={250} width={190} height={330} rx={36} fill="#262C2A" stroke="#3A423F" strokeWidth={4} />
       )}
       <rect x={760} y={470} width={260} height={30} fill="#1F2523" />
+      {arm > 0 && (
+        <g>
+          <path d={`M -40 ${380 - 40 * arm} Q ${150 + 120 * arm} ${300 - 60 * arm} ${-40 + 470 * arm} ${330 - 20 * arm}`} stroke={L.accent} strokeWidth={34} fill="none" strokeLinecap="round" opacity={0.8} />
+          <path d={`M -40 ${380 - 40 * arm} Q ${150 + 120 * arm} ${300 - 60 * arm} ${-40 + 470 * arm} ${330 - 20 * arm}`} stroke="#000" strokeWidth={26} fill="none" strokeLinecap="round" />
+        </g>
+      )}
+      </g>
       <rect width={1000} height={560} filter={`url(#feedNoise${seed})`} opacity={0.16} style={{mixBlendMode: 'screen'}} />
       {Array.from({length: 28}, (_, i) => <rect key={i} x={0} y={i * 20} width={1000} height={3} fill="#000" opacity={0.2} />)}
       <rect width={1000} height={560} fill="url(#feedVig)" />

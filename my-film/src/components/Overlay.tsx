@@ -120,3 +120,14 @@ export const Notify: React.FC<{frame: number; at: number; until: number; x: numb
     </div>
   );
 };
+
+// A cast member speaking: white line beside the speaker, fades in and out.
+export const Speech: React.FC<{text: string; frame: number; from: number; to: number; x: number; y: number}> = ({text, frame, from, to, x, y}) => {
+  const L = useLook();
+  return (
+    <div style={{position: 'absolute', left: Math.min(x, 1880 - text.length * 46 * 0.48), top: y, whiteSpace: 'nowrap', fontFamily: FONT, fontWeight: 700, fontSize: 44,
+      color: L.text, textShadow: '0 0 6px #000, 2px 2px 0 #000', opacity: fade(frame, from, to)}}>
+      {text}
+    </div>
+  );
+};

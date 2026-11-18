@@ -123,6 +123,36 @@ export const VINTAGE: Look = {
 };
 
 export const STYLES: Look[] = [PIXEL, PAPER, CHALK, NEON, VINTAGE];
+// (HORROR is added below and is the channel default.)
+
+// 6. HORROR INK — the channel style for scary true stories. Crisp at full 1080p (no pixel filter),
+// near-black night, flat colours with dark ink outlines, cold moonlight, blood-red accent,
+// soft vignette and a whisper of film grain.
+const HorrorPost: React.FC<{frame: number}> = ({frame}) => (
+  <AbsoluteFill style={{pointerEvents: 'none'}}>
+    <svg width={1920} height={1080}>
+      <defs>
+        <filter id={`hgrain${frame % 6}`}><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed={frame % 6} /><feColorMatrix type="saturate" values="0" /></filter>
+        <radialGradient id="hvig" cx="50%" cy="48%" r="62%"><stop offset="55%" stopColor="#000" stopOpacity={0} /><stop offset="100%" stopColor="#000" stopOpacity={0.75} /></radialGradient>
+      </defs>
+      <rect width={1920} height={1080} filter={`url(#hgrain${frame % 6})`} opacity={0.06} style={{mixBlendMode: 'overlay'}} />
+      <rect width={1920} height={1080} fill="url(#hvig)" />
+    </svg>
+  </AbsoluteFill>
+);
+export const HORROR: Look = {
+  ...CLASSIC, id: 'horror', label: 'Horror Ink',
+  bg: '#090A10', bgLow: '#050609', floor: '#3A3F4E', floorW: 3,
+  outline: '#4E5466', outlineW: 3, wobble: 0.5,
+  shadeOn: '#FFE3B0', shadeOff: '#1E1C1A', base: '#1A1C24', windowFill: '#0E1424', moon: '#DCE6FF',
+  phoneOff: '#14161D', phoneOn: '#A8D0FF', screen: '#24508F', metal: '#9EA4B2', plate: '#1F222C', plate2: '#2A2E3A',
+  pip: '#E9B48A', pipDark: '#2B3140', pipStroke: '#030305', pipStrokeW: 4, pipFillOpacity: 1, limbW: 14,
+  face: '#120A06', item: '#C8202B', itemDark: '#8E141C',
+  shadowBody: '#000000', accent: '#E5383B', accentCore: '#FFD0D0',
+  glow: 1, glowWarm: '#FFB86B', glowCool: '#7FA6FF', glowPhone: '#5EA8FF', coneOpacity: 0.07,
+  text: '#F2F2F2', textScale: 1, textShadow: '0 2px 6px rgba(0,0,0,0.9)', repColor: '#E5383B', repStroke: '#000', hudBg: '#090A10cc',
+  Post: HorrorPost,
+};
 
 // The channel's chosen style. Every film renders with this unless the user asks for an experiment.
-export const CHANNEL_LOOK = PIXEL;
+export const CHANNEL_LOOK = HORROR;

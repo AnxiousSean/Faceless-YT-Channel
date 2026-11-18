@@ -22,7 +22,14 @@ export type PipPose = {
   bowtie?: number;      // 0..1 pop-in of the bow tie item
   walk?: number;        // walk-cycle phase (radians); legs swing when walkAmt > 0
   walkAmt?: number;     // 0..1 stride size
+  // Cast options: every story gets its own characters, same simple drawing style.
+  skin?: string;        // head colour
+  shirt?: string;       // body + arms
+  pants?: string;       // legs
+  hair?: string;        // hair colour
+  hairStyle?: 'none' | 'short' | 'long' | 'cap' | 'bun' | 'spiky';
 };
+export type CastMember = Pick<PipPose, 'skin' | 'shirt' | 'pants' | 'hair' | 'hairStyle'>;
 
 const HEAD_Y = -205;
 const HEAD_R = 78;
@@ -79,6 +86,10 @@ export const Barbell: React.FC<{y: number; frame: number}> = ({y, frame}) => {
 export const Pip: React.FC<PipPose> = (p) => {
   const L = useLook();
   const {x, y, frame, scale = 1, squash = 0, browL = 0, browR = 0, browY = 0, mouth = 0, mouthOpen = 0, blink = 0, look = 0, barY = null, headband = 0, bowtie = 0, walk = 0, walkAmt = 0} = p;
+  const skin = p.skin ?? L.pip;
+  const shirt = p.shirt ?? L.pip;
+  const hair = p.hair ?? '#1A120C';
+  const hairStyle = p.hairStyle ?? 'none';
   const handL: [number, number] = barY !== null ? [-66, barY] : p.handL ?? [-58, -40];
   const handR: [number, number] = barY !== null ? [66, barY] : p.handR ?? [58, -40];
   const sx = scale * (1 + squash);
@@ -100,13 +111,37 @@ export const Pip: React.FC<PipPose> = (p) => {
         <defs>
           <clipPath id={clipId}><circle cx={0} cy={HEAD_Y} r={HEAD_R} /></clipPath>
         </defs>
-        {limb(leg(-1, walk, walkAmt), L.pipDark)}
-        {limb(leg(1, walk, walkAmt), L.pip)}
+        {hairStyle === 'long' && (
+          <path d={`M -82 ${HEAD_Y - 10} Q -86 ${HEAD_Y + 70} -60 ${HEAD_Y + 105} L 60 ${HEAD_Y + 105} Q 86 ${HEAD_Y + 70} 82 ${HEAD_Y - 10} Z`}
+            fill={hair} stroke={inked ? L.pipStroke : 'none'} strokeWidth={L.pipStrokeW} />
+        )}
+        {limb(leg(-1, walk, walkAmt), p.pants ?? L.pipDark)}
+        {limb(leg(1, walk, walkAmt), p.pants ?? L.pip)}
         {/* body + head (no neck) */}
-        {inked && <ellipse cx={0} cy={-90} rx={47} ry={58} fill={L.pip} {...bodyStroke} />}
-        <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill={L.pip} {...bodyStroke} />
-        <ellipse cx={0} cy={-90} rx={inked ? 47 - L.pipStrokeW / 2 : 47} ry={inked ? 58 - L.pipStrokeW / 2 : 58} fill={L.pip}
+        {inked && <ellipse cx={0} cy={-90} rx={47} ry={58} fill={shirt} {...bodyStroke} />}
+        <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill={skin} {...bodyStroke} />
+        <ellipse cx={0} cy={-90} rx={inked ? 47 - L.pipStrokeW / 2 : 47} ry={inked ? 58 - L.pipStrokeW / 2 : 58} fill={shirt}
           {...(inked ? {stroke: 'none'} : bodyStroke)} />
+        {/* hair (drawn on the head, above the brows) */}
+        {hairStyle !== 'none' && hairStyle !== 'cap' && (
+          <g>
+            <path clipPath={`url(#${clipId})`} fill={hair}
+              d={hairStyle === 'spiky'
+                ? `M -90 ${HEAD_Y - 44} L -60 ${HEAD_Y - 60} L -40 ${HEAD_Y - 44} L -18 ${HEAD_Y - 62} L 4 ${HEAD_Y - 46} L 28 ${HEAD_Y - 64} L 48 ${HEAD_Y - 46} L 70 ${HEAD_Y - 58} L 90 ${HEAD_Y - 40} L 90 ${HEAD_Y - 100} L -90 ${HEAD_Y - 100} Z`
+                : `M -90 ${HEAD_Y - 10} L -70 ${HEAD_Y - 10} Q -60 ${HEAD_Y - 48} -10 ${HEAD_Y - 50} Q 40 ${HEAD_Y - 58} 70 ${HEAD_Y - 30} L 90 ${HEAD_Y - 10} L 90 ${HEAD_Y - 100} L -90 ${HEAD_Y - 100} Z`} />
+            {hairStyle === 'spiky' && (
+              <path fill={hair} d={`M -50 ${HEAD_Y - 70} L -36 ${HEAD_Y - 96} L -20 ${HEAD_Y - 74} L 0 ${HEAD_Y - 100} L 18 ${HEAD_Y - 74} L 38 ${HEAD_Y - 94} L 52 ${HEAD_Y - 68} Z`} />
+            )}
+            {hairStyle === 'bun' && <circle cx={0} cy={HEAD_Y - HEAD_R - 14} r={26} fill={hair} stroke={inked ? L.pipStroke : 'none'} strokeWidth={L.pipStrokeW} />}
+            {inked && <circle cx={0} cy={HEAD_Y} r={HEAD_R} fill="none" stroke={L.pipStroke} strokeWidth={L.pipStrokeW} />}
+          </g>
+        )}
+        {hairStyle === 'cap' && (
+          <g stroke={inked ? L.pipStroke : 'none'} strokeWidth={L.pipStrokeW}>
+            <path fill={hair} d={`M -76 ${HEAD_Y - 30} Q -74 ${HEAD_Y - 92} 0 ${HEAD_Y - 92} Q 74 ${HEAD_Y - 92} 76 ${HEAD_Y - 30} Z`} />
+            <path fill={hair} d={`M 40 ${HEAD_Y - 34} L 122 ${HEAD_Y - 30} Q 120 ${HEAD_Y - 18} 60 ${HEAD_Y - 20} Z`} />
+          </g>
+        )}
         {/* Day-2 item: headband */}
         {headband > 0 && (
           <g transform={`translate(0 ${HEAD_Y - 52}) scale(${headband}) translate(0 ${-(HEAD_Y - 52)})`}>
@@ -129,8 +164,8 @@ export const Pip: React.FC<PipPose> = (p) => {
         )}
         {barY !== null && <Barbell y={barY} frame={frame} />}
         {/* noodle arms on top (mitten ends, no fingers) */}
-        {limb(arm(-1, handL), L.pip)}
-        {limb(arm(1, handR), L.pip)}
+        {limb(arm(-1, handL), shirt)}
+        {limb(arm(1, handR), shirt)}
       </g>
     </g>
   );

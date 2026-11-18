@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import '../components/fonts';
 import {FilterDefs, Look, LookContext} from '../components/look';
-import {CHANNEL_LOOK} from '../styles/looks';
+import {PIXEL} from '../styles/looks';
 import {DayCounter, Letterbox} from '../components/Overlay';
 import {S1, S2, S3, S4, S5, S6, RUN_STEPS, RUN_STARTS} from './three-chairs/shots1';
 import {S7, S8, S9, S10, S11, S12, S13, S14, S15, SLAM, WORD, LETTER_START, LETTER_GAP} from './three-chairs/shots2';
@@ -103,7 +103,7 @@ const Soundtrack: React.FC = () => (
   </>
 );
 
-export const ThreeChairs: React.FC<{look?: Look}> = ({look = CHANNEL_LOOK}) => {
+export const ThreeChairs: React.FC<{look?: Look}> = ({look = PIXEL}) => {
   const frame = useCurrentFrame();
   return (
     <LookContext.Provider value={look}>
